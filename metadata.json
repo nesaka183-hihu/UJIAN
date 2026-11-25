@@ -1,0 +1,6 @@
+{
+  "name": "Sistem Manajemen Ujian",
+  "description": "Portal manajemen ujian sekolah terpadu akses penuh untuk admin, pengawas, dan peserta ujian.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

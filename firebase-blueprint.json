@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Global school and application identity settings.",
+      "type": "object",
+      "properties": {
+        "namaApp": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "namaSekolah": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "logo": { "type": "string", "maxLength": 1000 },
+        "alamat": { "type": "string", "maxLength": 250 },
+        "tahunAjaran": { "type": "string", "maxLength": 30 }
+      },
+      "required": ["namaApp", "namaSekolah"]
+    },
+    "ExamUser": {
+      "title": "ExamUser",
+      "description": "Portal account for admin, pengawas, or siswa.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "Role": { "type": "string", "enum": ["admin", "pengawas", "siswa"] },
+        "Nama": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "Username": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "Password": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "Kelas": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["ID", "Role", "Nama", "Username", "Password"]
+    },
+    "Kelas": {
+      "title": "Kelas",
+      "description": "Academic class group.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "NamaKelas": { "type": "string", "minLength": 1, "maxLength": 64 }
+      },
+      "required": ["ID", "NamaKelas"]
+    },
+    "Sesi": {
+      "title": "Sesi",
+      "description": "Exam time slot.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "NamaSesi": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "JamMulai": { "type": "string", "minLength": 4, "maxLength": 10 },
+        "JamBerakhir": { "type": "string", "minLength": 4, "maxLength": 10 }
+      },
+      "required": ["ID", "NamaSesi", "JamMulai", "JamBerakhir"]
+    },
+    "Ruang": {
+      "title": "Ruang",
+      "description": "Physical or lab exam room.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "NamaRuang": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "Kapasitas": { "type": "number" }
+      },
+      "required": ["ID", "NamaRuang"]
+    },
+    "RuangSiswa": {
+      "title": "RuangSiswa",
+      "description": "Mapping between student and exam room.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "RuangID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "SiswaID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" }
+      },
+      "required": ["ID", "RuangID", "SiswaID"]
+    },
+    "RuangPengawas": {
+      "title": "RuangPengawas",
+      "description": "Proctor assignment to room, session, and date.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "RuangID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "SesiID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "PengawasID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "Tanggal": { "type": "string", "minLength": 8, "maxLength": 20 }
+      },
+      "required": ["ID", "RuangID", "SesiID", "PengawasID", "Tanggal"]
+    },
+    "Ujian": {
+      "title": "Ujian",
+      "description": "Scheduled exam with token, external link or built-in CBT questions.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "Kelas": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "Mapel": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "Tanggal": { "type": "string", "minLength": 8, "maxLength": 20 },
+        "SesiID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "Link": { "type": "string", "maxLength": 1000 },
+        "Token": { "type": "string", "minLength": 5, "maxLength": 5 },
+        "mode": { "type": "string", "enum": ["url", "cbt"] },
+        "aksesBebas": { "type": "boolean" },
+        "questions": { "type": "array" }
+      },
+      "required": ["ID", "Kelas", "Mapel", "Tanggal", "SesiID", "Token"]
+    },
+    "ExamSubmission": {
+      "title": "ExamSubmission",
+      "description": "Student CBT exam submission and auto-graded score.",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "UjianID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "SiswaID": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "SiswaNama": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "Kelas": { "type": "string", "maxLength": 64 },
+        "Mapel": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "Benar": { "type": "number" },
+        "Total": { "type": "number" },
+        "Nilai": { "type": "number" },
+        "SubmittedAt": { "type": "string", "minLength": 1, "maxLength": 64 }
+      },
+      "required": ["ID", "UjianID", "SiswaID", "SiswaNama", "Mapel", "Benar", "Total", "Nilai", "SubmittedAt"]
+    }
+  },
+  "firestore": {
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/AppSettings" },
+      "description": "Application and school branding configuration."
+    },
+    "/examUsers/{userId}": {
+      "schema": { "$ref": "#/entities/ExamUser" },
+      "description": "Portal user credentials and roles (admin, pengawas, siswa)."
+    },
+    "/kelas/{kelasId}": {
+      "schema": { "$ref": "#/entities/Kelas" },
+      "description": "School class list."
+    },
+    "/sesi/{sesiId}": {
+      "schema": { "$ref": "#/entities/Sesi" },
+      "description": "Exam time sessions."
+    },
+    "/ruang/{ruangId}": {
+      "schema": { "$ref": "#/entities/Ruang" },
+      "description": "Exam rooms and seat capacities."
+    },
+    "/ruang_siswa/{assignmentId}": {
+      "schema": { "$ref": "#/entities/RuangSiswa" },
+      "description": "Student-to-room assignments."
+    },
+    "/ruang_pengawas/{assignmentId}": {
+      "schema": { "$ref": "#/entities/RuangPengawas" },
+      "description": "Proctor-to-room-and-session assignments."
+    },
+    "/ujian/{ujianId}": {
+      "schema": { "$ref": "#/entities/Ujian" },
+      "description": "Exam schedules, tokens, and CBT questions."
+    },
+    "/submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/ExamSubmission" },
+      "description": "Student CBT exam scores and submissions."
+    }
+  }
+}

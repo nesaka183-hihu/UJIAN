@@ -1,0 +1,204 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.email == 'humedzain@gmail.com';
+    }
+
+    function isBoundedQuery() {
+      return request.query.limit != null && request.query.limit <= 1000;
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll(['namaApp', 'namaSekolah']) &&
+        data.keys().hasOnly(['namaApp', 'namaSekolah', 'logo', 'alamat', 'tahunAjaran']) &&
+        data.namaApp is string && data.namaApp.size() >= 1 && data.namaApp.size() <= 100 &&
+        data.namaSekolah is string && data.namaSekolah.size() >= 1 && data.namaSekolah.size() <= 150 &&
+        (!('logo' in data) || (data.logo is string && data.logo.size() <= 1000)) &&
+        (!('alamat' in data) || (data.alamat is string && data.alamat.size() <= 250)) &&
+        (!('tahunAjaran' in data) || (data.tahunAjaran is string && data.tahunAjaran.size() <= 30));
+    }
+
+    function isValidExamUser(data, docId) {
+      return data.keys().hasAll(['ID', 'Role', 'Nama', 'Username', 'Password']) &&
+        data.keys().hasOnly(['ID', 'Role', 'Nama', 'Username', 'Password', 'Kelas']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        data.Role in ['admin', 'pengawas', 'siswa'] &&
+        data.Nama is string && data.Nama.size() >= 1 && data.Nama.size() <= 120 &&
+        data.Username is string && data.Username.size() >= 1 && data.Username.size() <= 64 &&
+        data.Password is string && data.Password.size() >= 1 && data.Password.size() <= 128 &&
+        (!('Kelas' in data) || (data.Kelas is string && data.Kelas.size() <= 64));
+    }
+
+    function isValidKelas(data, docId) {
+      return data.keys().hasAll(['ID', 'NamaKelas']) &&
+        data.keys().hasOnly(['ID', 'NamaKelas']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        data.NamaKelas is string && data.NamaKelas.size() >= 1 && data.NamaKelas.size() <= 64;
+    }
+
+    function isValidSesi(data, docId) {
+      return data.keys().hasAll(['ID', 'NamaSesi', 'JamMulai', 'JamBerakhir']) &&
+        data.keys().hasOnly(['ID', 'NamaSesi', 'JamMulai', 'JamBerakhir']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        data.NamaSesi is string && data.NamaSesi.size() >= 1 && data.NamaSesi.size() <= 100 &&
+        data.JamMulai is string && data.JamMulai.size() >= 4 && data.JamMulai.size() <= 10 &&
+        data.JamBerakhir is string && data.JamBerakhir.size() >= 4 && data.JamBerakhir.size() <= 10;
+    }
+
+    function isValidRuang(data, docId) {
+      return data.keys().hasAll(['ID', 'NamaRuang']) &&
+        data.keys().hasOnly(['ID', 'NamaRuang', 'Kapasitas']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        data.NamaRuang is string && data.NamaRuang.size() >= 1 && data.NamaRuang.size() <= 100 &&
+        (!('Kapasitas' in data) || (data.Kapasitas is number && data.Kapasitas >= 1 && data.Kapasitas <= 1000));
+    }
+
+    function isValidRuangSiswa(data, docId) {
+      return data.keys().hasAll(['ID', 'RuangID', 'SiswaID']) &&
+        data.keys().hasOnly(['ID', 'RuangID', 'SiswaID']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        isValidId(data.RuangID) &&
+        isValidId(data.SiswaID);
+    }
+
+    function isValidRuangPengawas(data, docId) {
+      return data.keys().hasAll(['ID', 'RuangID', 'SesiID', 'PengawasID', 'Tanggal']) &&
+        data.keys().hasOnly(['ID', 'RuangID', 'SesiID', 'PengawasID', 'Tanggal']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        isValidId(data.RuangID) &&
+        isValidId(data.SesiID) &&
+        isValidId(data.PengawasID) &&
+        data.Tanggal is string && data.Tanggal.size() >= 8 && data.Tanggal.size() <= 20;
+    }
+
+    function isValidUjian(data, docId) {
+      return data.keys().hasAll(['ID', 'Kelas', 'Mapel', 'Tanggal', 'SesiID', 'Token']) &&
+        data.keys().hasOnly(['ID', 'Kelas', 'Mapel', 'Tanggal', 'SesiID', 'Link', 'Token', 'mode', 'aksesBebas', 'questions']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        data.Kelas is string && data.Kelas.size() >= 1 && data.Kelas.size() <= 64 &&
+        data.Mapel is string && data.Mapel.size() >= 1 && data.Mapel.size() <= 150 &&
+        data.Tanggal is string && data.Tanggal.size() >= 8 && data.Tanggal.size() <= 20 &&
+        isValidId(data.SesiID) &&
+        (!('Link' in data) || (data.Link is string && data.Link.size() <= 1000)) &&
+        data.Token is string && data.Token.size() == 5 &&
+        (!('mode' in data) || data.mode in ['url', 'cbt']) &&
+        (!('aksesBebas' in data) || data.aksesBebas is bool) &&
+        (!('questions' in data) || (data.questions is list && data.questions.size() <= 100 && (data.questions.size() == 0 || data.questions[0] is map)));
+    }
+
+    function isValidSubmission(data, docId) {
+      return data.keys().hasAll(['ID', 'UjianID', 'SiswaID', 'SiswaNama', 'Mapel', 'Benar', 'Total', 'Nilai', 'SubmittedAt']) &&
+        data.keys().hasOnly(['ID', 'UjianID', 'SiswaID', 'SiswaNama', 'Kelas', 'Mapel', 'Benar', 'Total', 'Nilai', 'SubmittedAt']) &&
+        isValidId(data.ID) && data.ID == docId &&
+        isValidId(data.UjianID) &&
+        isValidId(data.SiswaID) &&
+        data.SiswaNama is string && data.SiswaNama.size() >= 1 && data.SiswaNama.size() <= 120 &&
+        (!('Kelas' in data) || (data.Kelas is string && data.Kelas.size() <= 64)) &&
+        data.Mapel is string && data.Mapel.size() >= 1 && data.Mapel.size() <= 150 &&
+        data.Benar is number && data.Benar >= 0 &&
+        data.Total is number && data.Total >= 0 &&
+        data.Nilai is number && data.Nilai >= 0 && data.Nilai <= 100 &&
+        data.SubmittedAt is string && data.SubmittedAt.size() >= 1 && data.SubmittedAt.size() <= 64;
+    }
+
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+    }
+
+    match /settings/{settingId} {
+      allow get: if settingId == 'main';
+      allow create, update: if settingId == 'main' && isValidSettings(incoming());
+    }
+
+    match /examUsers/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(userId) && isValidExamUser(incoming(), userId);
+      allow update: if isValidId(userId) && isValidExamUser(incoming(), userId) && incoming().ID == existing().ID;
+      allow delete: if isValidId(userId) && userId != 'usr_admin_1';
+    }
+
+    match /kelas/{kelasId} {
+      allow get: if isValidId(kelasId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(kelasId) && isValidKelas(incoming(), kelasId);
+      allow update: if isValidId(kelasId) && isValidKelas(incoming(), kelasId) && incoming().ID == existing().ID;
+      allow delete: if isValidId(kelasId);
+    }
+
+    match /sesi/{sesiId} {
+      allow get: if isValidId(sesiId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(sesiId) && isValidSesi(incoming(), sesiId);
+      allow update: if isValidId(sesiId) && isValidSesi(incoming(), sesiId) && incoming().ID == existing().ID;
+      allow delete: if isValidId(sesiId);
+    }
+
+    match /ruang/{ruangId} {
+      allow get: if isValidId(ruangId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(ruangId) && isValidRuang(incoming(), ruangId);
+      allow update: if isValidId(ruangId) && isValidRuang(incoming(), ruangId) && incoming().ID == existing().ID;
+      allow delete: if isValidId(ruangId);
+    }
+
+    match /ruang_siswa/{assignmentId} {
+      allow get: if isValidId(assignmentId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(assignmentId) && isValidRuangSiswa(incoming(), assignmentId);
+      allow update: if isValidId(assignmentId) && isValidRuangSiswa(incoming(), assignmentId) && incoming().ID == existing().ID;
+      allow delete: if isValidId(assignmentId);
+    }
+
+    match /ruang_pengawas/{assignmentId} {
+      allow get: if isValidId(assignmentId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(assignmentId) && isValidRuangPengawas(incoming(), assignmentId);
+      allow update: if isValidId(assignmentId) && isValidRuangPengawas(incoming(), assignmentId) && incoming().ID == existing().ID;
+      allow delete: if isValidId(assignmentId);
+    }
+
+    match /ujian/{ujianId} {
+      allow get: if isValidId(ujianId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(ujianId) && isValidUjian(incoming(), ujianId);
+      allow update: if isValidId(ujianId) && isValidUjian(incoming(), ujianId) && incoming().ID == existing().ID && (
+        isBootstrappedAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['Token']) ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['Kelas', 'Mapel', 'Tanggal', 'SesiID', 'Link', 'mode', 'aksesBebas', 'questions'])
+      );
+      allow delete: if isValidId(ujianId);
+    }
+
+    match /submissions/{submissionId} {
+      allow get: if isValidId(submissionId);
+      allow list: if isBootstrappedAdmin() || isBoundedQuery();
+      allow create: if isValidId(submissionId) && isValidSubmission(incoming(), submissionId);
+      allow delete: if isValidId(submissionId);
+    }
+  }
+}
